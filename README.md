@@ -1,4 +1,4 @@
-# OG Fun Monke Horror — Map Template
+# OG Fun Monke Horror Map Template
 
 The official map template for creating custom maps for OG Fun Monke Horror on Meta Quest.
 
