@@ -184,7 +184,7 @@ namespace OGFunMonkeHorror.Editor
             if (isSingleColor)
             {
                 EditorGUILayout.PropertyField(_skyboxColorProp, new GUIContent("Sky Color"));
-                EditorGUILayout.LabelField("The flat colour used for the background sky.", _tooltipStyle);
+                EditorGUILayout.LabelField("The flat colour used for the background sky. Please note that this is only visible in-game and not in the Unity editor!", _tooltipStyle);
             }
             else
             {

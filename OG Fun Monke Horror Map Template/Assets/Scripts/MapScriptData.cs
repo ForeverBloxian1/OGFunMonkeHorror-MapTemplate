@@ -7,6 +7,7 @@ public class MapScriptData
     public List<MapRootData> mapRoots = new();
     public List<MapAIData> mapAIs = new();
     public List<TeleporterData> teleporters = new();
+    public List<JumpscareData> jumpscares = new();
 }
 
 [Serializable]
@@ -52,4 +53,11 @@ public class TeleporterData
 {
     public string objectPath;
     public string[] teleportPointPaths;
+}
+
+[Serializable]
+public class JumpscareData
+{
+    public string objectPath;
+    public string[] respawnPaths;
 }

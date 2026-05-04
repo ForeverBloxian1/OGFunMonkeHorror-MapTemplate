@@ -157,7 +157,7 @@ namespace OGFunMonkeHorror.Editor
             Section("Blender");
             Body("For complex or organic shapes, Blender is the best option. It's free at blender.org.\n\n1. Model your object in Blender.\n2. Apply transforms: Ctrl+A \u2192 All Transforms.\n3. Export as FBX: File \u2192 Export \u2192 FBX.\n4. Drag the FBX into Unity and then into Environment.\n\nKeep polygon counts reasonable for VR. Under 10,000 triangles for large props, under 2,000 for small details.");
             Section("Teleporters");
-            Body("A Teleporter lets you teleport the player to one or more points when they walk into a trigger zone.\n\n1. Create an empty GameObject inside Environment and name it Teleporter.\n2. Add a Collider component, Box, Sphere, or Capsule. Do not use a Mesh Collider.\n3. Enable Is Trigger on the Collider.\n4. Set the layer to Ignore Raycast.\n5. Add Component \u2192 Teleporter.\n6. Assign at least one Transform to the Teleport Points list. These are the positions the player can be sent to.\n\nThe Inspector will show errors if any of the required settings are missing. Fix them all before exporting.");
+            Body("A Teleporter lets you teleport the player to one or more points when they walk into a trigger zone.\n\n1. Create an empty GameObject inside Environment and name it Teleporter.\n2. Add a Collider component — Box, Sphere, or Capsule. Do not use a Mesh Collider.\n3. Enable Is Trigger on the Collider.\n4. Set the layer to Ignore Raycast.\n5. Add Component \u2192 Teleporter.\n6. Assign at least one Transform to the Teleport Points list. These are the positions the player can be sent to.\n\nThe Inspector will show errors if any of the required settings are missing. Fix them all before exporting.");
         }
 
         private void DrawVisuals()
@@ -192,6 +192,8 @@ namespace OGFunMonkeHorror.Editor
             Body("\u2022 Chase Distance: detection range in metres.\n\u2022 Field of View: horizontal cone in degrees. 180 is recommended.\n\u2022 Chase Audio: assign an AudioSource with Play On Awake off.\n\nThe monster raycasts toward the player. If nothing blocks the ray inside the FOV cone, the chase begins.");
             Section("Monster Collider");
             Body("Monsters must have a Collider with Is Trigger enabled so the game can detect when the player is caught.\n\nDo not use a Mesh Collider on a Monster. Use a Box, Sphere, or Capsule Collider instead.");
+            Section("Jumpscare");
+            Body("Monsters should have a Jumpscare component attached to the same GameObject as MapAI.\n\nAssign a Jumpscare Prefab and at least one Respawn Point. When the player enters the monster's collider the jumpscare prefab is spawned on their camera for 2 seconds then they are sent to a random respawn point.\n\nYour jumpscare prefab should contain:\n\n• An AudioSource somewhere on the prefab for the scare sound.\n• A black inside-out box that completely surrounds the player so they cannot see what is happening during the jumpscare.\n• Your monster mesh inside the box facing the player. This is purely visual, no scripts needed on the monster itself. Add an Animator to play your jumpscare animation.");
             Section("Scene Gizmos");
             Body("Select a Monster AI in Scene view to see:\n\u2022 Red sphere: Chase Distance.\n\u2022 Orange sphere: extended range.\n\u2022 Yellow cone: Field of View.");
         }

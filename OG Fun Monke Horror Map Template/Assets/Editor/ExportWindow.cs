@@ -133,6 +133,17 @@ namespace OGFunMonkeHorror.Editor
                             if (col is MeshCollider)
                                 Error($"Monster {aiName} cannot use a Mesh Collider. Use Box, Sphere, or Capsule.");
                         }
+
+                        var js = ai.GetComponent<Jumpscare>();
+                        if (js == null)
+                            Warn($"Monster {aiName} has no Jumpscare script assigned.");
+                        else
+                        {
+                            if (js.jumpscarePrefab == null)
+                                Error($"Monster {aiName} Jumpscare has no prefab assigned.");
+                            if (js.respawnPoints == null || js.respawnPoints.Length == 0)
+                                Error($"Monster {aiName} Jumpscare has no respawn points assigned.");
+                        }
                     }
                 }
 
@@ -396,6 +407,19 @@ namespace OGFunMonkeHorror.Editor
                 {
                     objectPath = GetObjectPath(tp.transform),
                     teleportPointPaths = pointPaths,
+                });
+            }
+
+            foreach (var js in mapRoot.GetComponentsInChildren<Jumpscare>(true))
+            {
+                var pointPaths = new string[js.respawnPoints?.Length ?? 0];
+                for (int i = 0; i < pointPaths.Length; i++)
+                    pointPaths[i] = js.respawnPoints[i] != null ? GetObjectPath(js.respawnPoints[i]) : "";
+
+                data.jumpscares.Add(new JumpscareData
+                {
+                    objectPath = GetObjectPath(js.transform),
+                    respawnPaths = pointPaths,
                 });
             }
 

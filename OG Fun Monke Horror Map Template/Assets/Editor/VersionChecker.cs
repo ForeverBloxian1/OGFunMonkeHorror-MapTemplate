@@ -17,10 +17,10 @@ namespace OGFunMonkeHorror.Editor
     [InitializeOnLoad]
     public static class VersionChecker
     {
-        private const string CurrentVersion    = "1.0.1";
-        private const string VersionUrl        = "https://raw.githubusercontent.com/ForeverBloxian1/OGFunMonkeHorror-MapTemplate/refs/heads/main/version.json";
-        private const string LastCheckedPref   = "OGFunMonkeHorror_LastVersionCheck";
-        private const string SkipVersionPref   = "OGFunMonkeHorror_SkipVersion";
+        private const string CurrentVersion = "1.0.2";
+        private const string VersionUrl = "https://raw.githubusercontent.com/ForeverBloxian1/OGFunMonkeHorror-MapTemplate/refs/heads/main/version.json";
+        private const string LastCheckedPref = "OGFunMonkeHorror_LastVersionCheck";
+        private const string SkipVersionPref = "OGFunMonkeHorror_SkipVersion";
         private const double CheckIntervalHours = 0;
 
         static VersionChecker()
@@ -51,7 +51,11 @@ namespace OGFunMonkeHorror.Editor
 
                 if (info == null || string.IsNullOrEmpty(info.version)) return;
                 if (info.version == EditorPrefs.GetString(SkipVersionPref)) return;
-                if (!IsNewer(info.version, CurrentVersion)) return;
+                if (!IsNewer(info.version, CurrentVersion))
+                {
+                    Debug.Log("The project is up to date!");
+                    return;
+                }
 
                 int choice = EditorUtility.DisplayDialogComplex(
                     "Update Available",

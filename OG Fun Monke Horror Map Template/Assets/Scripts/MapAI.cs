@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.AI;
 
 namespace OGFunMonkeHorror.Assets.AI
@@ -8,33 +8,37 @@ namespace OGFunMonkeHorror.Assets.AI
     {
         public enum AIType { Neutral, Monster }
 
-        [Header("AI Type")]
         public AIType aiType = AIType.Neutral;
 
-        [Header("Movement")]
-        public float wanderSpeed = 2f;
-        public float chaseSpeed = 7f;
+        public float wanderSpeed = 3.5f;
+        public float chaseSpeed = 6f;
 
-        [Header("Waypoints")]
         public GameObject[] waypoints;
 
-        [Header("Detection")]
-        public float chaseDistance = 30f;
+        public float chaseDistance = 10f;
         [Range(0f, 360f)]
         public float fieldOfViewAngle = 180f;
 
-        [Header("Audio")]
         public AudioSource chaseAudio;
 
         private void OnDrawGizmosSelected()
         {
+            if (waypoints != null)
+            {
+                Gizmos.color = new Color(0.2f, 0.8f, 0.2f, 0.9f);
+                foreach (var wp in waypoints)
+                {
+                    if (wp == null) continue;
+                    Gizmos.DrawWireSphere(wp.transform.position, 0.25f);
+                    Gizmos.DrawLine(transform.position, wp.transform.position);
+                }
+            }
+
             if (aiType != AIType.Monster) return;
 
             Gizmos.color = new Color(1f, 0.1f, 0.1f, 0.12f);
             Gizmos.DrawSphere(transform.position, chaseDistance);
             Gizmos.color = new Color(1f, 0.1f, 0.1f, 0.9f);
-            Gizmos.DrawWireSphere(transform.position, chaseDistance);
-            Gizmos.color = new Color(1f, 0.5f, 0f, 0.35f);
             Gizmos.DrawWireSphere(transform.position, chaseDistance);
 
             Gizmos.color = new Color(1f, 1f, 0f, 0.9f);
@@ -62,14 +66,13 @@ namespace OGFunMonkeHorror.Assets.AI.Editor
     using UnityEditor;
 
     [CustomEditor(typeof(MapAI))]
-    public class MapAIEditor : Editor
+    public class MapAIEditor : UnityEditor.Editor
     {
         private SerializedProperty _aiType;
         private SerializedProperty _wanderSpeed;
         private SerializedProperty _chaseSpeed;
         private SerializedProperty _waypoints;
         private SerializedProperty _chaseDistance;
-        private SerializedProperty _visibilityFactor;
         private SerializedProperty _fieldOfViewAngle;
         private SerializedProperty _chaseAudio;
 
@@ -80,7 +83,6 @@ namespace OGFunMonkeHorror.Assets.AI.Editor
             _chaseSpeed = serializedObject.FindProperty("chaseSpeed");
             _waypoints = serializedObject.FindProperty("waypoints");
             _chaseDistance = serializedObject.FindProperty("chaseDistance");
-            _visibilityFactor = serializedObject.FindProperty("visibilityFactor");
             _fieldOfViewAngle = serializedObject.FindProperty("fieldOfViewAngle");
             _chaseAudio = serializedObject.FindProperty("chaseAudio");
         }
@@ -96,20 +98,26 @@ namespace OGFunMonkeHorror.Assets.AI.Editor
 
             EditorGUILayout.Space(10);
 
+            EditorGUILayout.LabelField("Movement", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_wanderSpeed, new GUIContent("Wander Speed"));
             if (isMonster)
                 EditorGUILayout.PropertyField(_chaseSpeed, new GUIContent("Chase Speed"));
 
             EditorGUILayout.Space(10);
 
+            EditorGUILayout.LabelField("Waypoints", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(_waypoints, new GUIContent("Waypoints"), true);
+
             if (isMonster)
             {
                 EditorGUILayout.Space(10);
+                EditorGUILayout.LabelField("Detection", EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox("Gizmos visible when this object is selected in the Scene view.", MessageType.None);
                 EditorGUILayout.PropertyField(_chaseDistance, new GUIContent("Chase Distance"));
                 EditorGUILayout.PropertyField(_fieldOfViewAngle, new GUIContent("Field of View"));
 
                 EditorGUILayout.Space(10);
+                EditorGUILayout.LabelField("Audio", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(_chaseAudio, new GUIContent("Chase Audio"));
             }
 
