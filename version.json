@@ -1,5 +1,5 @@
 {
-  "version": "do not download i bugged it out ignore this",
-  "downloadUrl": "https://github.com/ForeverBloxian1/OGFunMonkeHorror-MapTemplate/releases/tag/1.0.1",
-  "changelog": "Initial release."
+  "version": "1.0.2",
+  "downloadUrl": "https://github.com/ForeverBloxian1/OGFunMonkeHorror-MapTemplate/releases/tag/1.0.2",
+  "changelog": "Added jumpscare script, fixed some issues with AI waypoints not showing."
 }
