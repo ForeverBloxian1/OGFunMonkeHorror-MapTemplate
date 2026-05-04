@@ -25,5 +25,5 @@ Join the Discord and post in the map maker support channel if you run into issue
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](LICENSE) for details.
 Copyright (c) 2026 Silly Games
