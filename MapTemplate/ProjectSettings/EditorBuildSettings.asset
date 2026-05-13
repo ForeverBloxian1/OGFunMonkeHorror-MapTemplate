@@ -8,6 +8,14 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Template1.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/Baseplate.unity
+    guid: 42873b7eff911464a8d9fcb36a41810c
   m_configObjects:
+    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 8c660d99b244ac54fb65a451d7a47ea9,
+      type: 2}
     com.unity.addressableassets: {fileID: 11400000, guid: 4d81001889c850248ba2bd84127c6a4e,
       type: 2}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: d48f432e25f565f4487012a07dfd56ad,
+      type: 2}
+  m_UseUCBPForAssetBundles: 0

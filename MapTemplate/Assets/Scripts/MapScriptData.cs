@@ -8,6 +8,8 @@ public class MapScriptData
     public List<MapAIData> mapAIs = new();
     public List<TeleporterData> teleporters = new();
     public List<JumpscareData> jumpscares = new();
+    public List<ToggleData> togglers = new();
+    public List<DoorData> doors = new();
 }
 
 [Serializable]
@@ -20,6 +22,7 @@ public class MapRootData
     public float portalColorB;
     public float portalColorA;
     public bool modsAllowed;
+    public int maxPlayers;
     public int skyboxMode;
     public string skyboxMaterialName;
     public float skyboxColorR;
@@ -60,4 +63,26 @@ public class JumpscareData
 {
     public string objectPath;
     public string[] respawnPaths;
+}
+
+[Serializable]
+public class ToggleData
+{
+    public string objectPath;
+    public string[] targetPaths;
+    public int mode;
+    public bool oneShot;
+}
+
+[Serializable]
+public class DoorData
+{
+    public string objectPath;
+    public string doorObjectPath;
+    public float openPosX, openPosY, openPosZ;
+    public float closedPosX, closedPosY, closedPosZ;
+    public float speed;
+    public bool autoOpen;
+    public float autoOpenTimer;
+    public int networkMode;
 }

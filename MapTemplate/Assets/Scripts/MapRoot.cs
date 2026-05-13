@@ -8,6 +8,7 @@ public class MapRoot : MonoBehaviour
     [SerializeField] private string _mapName = "My Map";
     [SerializeField] private Color _portalColor = Color.cyan;
     [SerializeField] private bool _modsAllowed = true;
+    [SerializeField, Range(1, 50)] private int _maxPlayers = 15;
 
     [Header("Lighting")]
     [SerializeField] private SkyboxMode _skyboxMode = SkyboxMode.SingleColor;
@@ -24,6 +25,7 @@ public class MapRoot : MonoBehaviour
     public string MapName => _mapName;
     public Color PortalColor => _portalColor;
     public bool ModsAllowed => _modsAllowed;
+    public int MaxPlayers => _maxPlayers;
     public SkyboxMode SkyboxModeValue => _skyboxMode;
     public Material SkyboxMaterial => _skyboxMaterial;
     public Color SkyboxColor => _skyboxColor;
@@ -82,6 +84,7 @@ namespace OGFunMonkeHorror.Editor
         private SerializedProperty _mapNameProp;
         private SerializedProperty _portalColorProp;
         private SerializedProperty _modsAllowedProp;
+        private SerializedProperty _maxPlayersProp;
         private SerializedProperty _skyboxModeProp;
         private SerializedProperty _skyboxColorProp;
         private SerializedProperty _skyboxMaterialProp;
@@ -101,6 +104,7 @@ namespace OGFunMonkeHorror.Editor
             _mapNameProp = serializedObject.FindProperty("_mapName");
             _portalColorProp = serializedObject.FindProperty("_portalColor");
             _modsAllowedProp = serializedObject.FindProperty("_modsAllowed");
+            _maxPlayersProp = serializedObject.FindProperty("_maxPlayers");
             _skyboxModeProp = serializedObject.FindProperty("_skyboxMode");
             _skyboxColorProp = serializedObject.FindProperty("_skyboxColor");
             _skyboxMaterialProp = serializedObject.FindProperty("_skyboxMaterial");
@@ -170,6 +174,11 @@ namespace OGFunMonkeHorror.Editor
 
             EditorGUILayout.PropertyField(_modsAllowedProp, new GUIContent("Mods Allowed"));
             EditorGUILayout.LabelField("Allow players to use mods while playing your map.", _tooltipStyle);
+
+            EditorGUILayout.Space(8);
+
+            EditorGUILayout.PropertyField(_maxPlayersProp, new GUIContent("Max Players"));
+            EditorGUILayout.LabelField("Maximum number of players allowed in a public room running your map. Range 1-50.", _tooltipStyle);
         }
 
         private void DrawLighting()

@@ -17,7 +17,7 @@ namespace OGFunMonkeHorror.Editor
     [InitializeOnLoad]
     public static class VersionChecker
     {
-        private const string CurrentVersion = "1.0.2";
+        private const string CurrentVersion = "1.1.0";
         private const string VersionUrl = "https://raw.githubusercontent.com/ForeverBloxian1/OGFunMonkeHorror-MapTemplate/refs/heads/main/version.json";
         private const string LastCheckedPref = "OGFunMonkeHorror_LastVersionCheck";
         private const string SkipVersionPref = "OGFunMonkeHorror_SkipVersion";
