@@ -4,13 +4,13 @@ The official map template for creating custom maps for OG Fun Monke Horror on Me
 
 ## Requirements
 
-- Unity 2022.3 LTS
+- Unity 6000.0.74f1
 - Android Build Support module installed in Unity Hub
 
 ## Getting Started
 
 1. Download the latest release from the [Releases](../../releases) page
-2. Extract the zip and open the project in Unity 2022.3 LTS
+2. Extract the zip and open the project in Unity 6000.0.74f1
 3. Open **OG Fun Monke Horror → Guide** for full documentation
 
 ## Uploading Your Map
