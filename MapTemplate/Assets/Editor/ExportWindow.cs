@@ -25,9 +25,6 @@ namespace OGFunMonkeHorror.Editor
         private readonly List<string> _errors = new();
         private readonly List<string> _warnings = new();
 
-        // Multi-export state. Scenes the user wants to batch-export. Each
-        // scene must contain a MapRoot at its root (or as a direct child of
-        // a root object) for validation + export to succeed.
         private ExportMode _mode = ExportMode.Single;
         private readonly List<SceneAsset> _scenes = new();
         private readonly List<string> _multiLog = new();
@@ -48,10 +45,6 @@ namespace OGFunMonkeHorror.Editor
             EditorGUILayout.LabelField("Export Map", EditorStyles.boldLabel);
             EditorGUILayout.Space(6);
 
-            // Mode toggle. Single Export = the original one-scene flow.
-            // Multiple Export = batch a list of SceneAssets, opening each in
-            // turn, validating, and writing one zip per scene to the same
-            // output folder.
             EditorGUILayout.BeginHorizontal();
             using (new EditorGUI.DisabledScope(_multiBusy))
             {
@@ -64,7 +57,6 @@ namespace OGFunMonkeHorror.Editor
 
             EditorGUILayout.Space(8);
 
-            // Shared output-folder picker — both modes write here.
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.TextField("Output Folder", string.IsNullOrEmpty(_outputFolder) ? "" : _outputFolder);
             if (GUILayout.Button("Browse", GUILayout.Width(60)))
@@ -172,9 +164,6 @@ namespace OGFunMonkeHorror.Editor
 
         private void Update()
         {
-            // Live validation only in Single mode. Multi-export is doing its
-            // own per-scene validation while it iterates and we don't want
-            // background work fighting with that.
             if (_mode == ExportMode.Single && !_multiBusy && _selectedRoot != null)
             {
                 RunValidation();
@@ -399,13 +388,6 @@ namespace OGFunMonkeHorror.Editor
             }
         }
 
-        /// <summary>
-        /// Builds the Android + Win64 bundles for <paramref name="root"/> and
-        /// writes a zip to the configured output folder. The active scene must
-        /// already be the one containing <paramref name="root"/>.
-        /// Returns null on success, an error string on failure (no exception
-        /// bubbles out, so multi-export can keep going).
-        /// </summary>
         private string ExportSceneCore(MapRoot root, out string zipPath)
         {
             zipPath = null;
@@ -418,7 +400,6 @@ namespace OGFunMonkeHorror.Editor
             zipPath = Path.Combine(_outputFolder, safeName + ".zip");
 
             string androidBundleName = safeName + "_android";
-            string win64BundleName = safeName + "_win64";
 
             try
             {
@@ -437,44 +418,61 @@ namespace OGFunMonkeHorror.Editor
                 var imp = AssetImporter.GetAtPath(scenePath);
                 if (imp == null) return $"Scene asset not found at {scenePath}.";
 
-                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
-                Directory.CreateDirectory(tempDir);
+                string assetsBundleName = safeName + "_assets";
+                var assetImporters = new List<AssetImporter>();
+                foreach (var ap in CollectAssetBundlePaths(root.gameObject))
+                {
+                    var ai = AssetImporter.GetAtPath(ap);
+                    if (ai == null) continue;
+                    ai.assetBundleName = assetsBundleName;
+                    assetImporters.Add(ai);
+                }
+                foreach (var ai in assetImporters) ai.SaveAndReimport();
+                bool hasAssets = assetImporters.Count > 0;
 
-                imp.assetBundleName = androidBundleName;
-                imp.SaveAndReimport();
+                string cacheRoot = Path.Combine(Path.GetTempPath(), "OGFMHBundleCache");
+                string androidDir = Path.Combine(cacheRoot, "android");
+                Directory.CreateDirectory(androidDir);
 
-                if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
-                    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
+                var originalTarget = EditorUserBuildSettings.activeBuildTarget;
+                var originalGroup = BuildPipeline.GetBuildTargetGroup(originalTarget);
+                try
+                {
+                    if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
+                        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
 
-                BuildPipeline.BuildAssetBundles(tempDir,
-                    BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.Android);
+                    imp.assetBundleName = androidBundleName;
+                    imp.SaveAndReimport();
+                    BuildPipeline.BuildAssetBundles(androidDir,
+                        BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.Android);
+                }
+                finally
+                {
+                    imp.assetBundleName = "";
+                    imp.SaveAndReimport();
+                    foreach (var ai in assetImporters) ai.assetBundleName = "";
+                    foreach (var ai in assetImporters) ai.SaveAndReimport();
+                    if (EditorUserBuildSettings.activeBuildTarget != originalTarget)
+                        EditorUserBuildSettings.SwitchActiveBuildTarget(originalGroup, originalTarget);
+                }
 
-                imp.assetBundleName = win64BundleName;
-                imp.SaveAndReimport();
+                string androidFile = Path.Combine(androidDir, androidBundleName);
+                if (!File.Exists(androidFile)) return "The Quest bundle wasn't created.";
 
-                string win64TempDir = tempDir + "_win64";
-                if (Directory.Exists(win64TempDir)) Directory.Delete(win64TempDir, true);
-                Directory.CreateDirectory(win64TempDir);
-
-                BuildPipeline.BuildAssetBundles(win64TempDir,
-                    BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.StandaloneWindows64);
-
-                imp.assetBundleName = "";
-                imp.SaveAndReimport();
-
-                string androidFile = Path.Combine(tempDir, androidBundleName);
-                string win64File = Path.Combine(win64TempDir, win64BundleName);
-
-                if (!File.Exists(androidFile)) return "Android bundle was not produced.";
-                if (!File.Exists(win64File)) return "Win64 bundle was not produced.";
+                string androidAssetsEntry = assetsBundleName + "_android";
+                string androidAssetsFile = Path.Combine(androidDir, assetsBundleName);
+                bool haveAndroidAssets = hasAssets && File.Exists(androidAssetsFile);
 
                 var meta = new MapMeta
                 {
                     mapName = root.MapName,
                     androidBundle = androidBundleName,
-                    win64Bundle = win64BundleName
+                    androidAssetsBundle = haveAndroidAssets ? androidAssetsEntry : ""
                 };
                 meta.PortalColor = root.PortalColor;
+
+                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+                Directory.CreateDirectory(tempDir);
 
                 string jsonPath = Path.Combine(tempDir, "map.json");
                 File.WriteAllText(jsonPath, JsonUtility.ToJson(meta, true));
@@ -486,13 +484,12 @@ namespace OGFunMonkeHorror.Editor
                 using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
                 {
                     zip.CreateEntryFromFile(androidFile, androidBundleName);
-                    zip.CreateEntryFromFile(win64File, win64BundleName);
+                    if (haveAndroidAssets) zip.CreateEntryFromFile(androidAssetsFile, androidAssetsEntry);
                     zip.CreateEntryFromFile(jsonPath, "map.json");
                     zip.CreateEntryFromFile(scriptDataOutputPath, "scriptdata.json");
                 }
 
                 Directory.Delete(tempDir, true);
-                Directory.Delete(win64TempDir, true);
 
                 return null;
             }
@@ -503,13 +500,6 @@ namespace OGFunMonkeHorror.Editor
             }
         }
 
-        /// <summary>
-        /// Batch-export every SceneAsset in <see cref="_scenes"/>. For each
-        /// scene we open it, locate a MapRoot among its root GameObjects
-        /// (or in any descendant of a root), validate, then build & zip.
-        /// All zips land in the same Output Folder. The user's originally-
-        /// open scene is restored when the batch finishes.
-        /// </summary>
         private void DoExportMultiple()
         {
             _multiLog.Clear();
@@ -518,14 +508,11 @@ namespace OGFunMonkeHorror.Editor
             string originalScenePath = SceneManager.GetActiveScene().path;
             bool originalIsDirty = SceneManager.GetActiveScene().isDirty;
 
-            // Force the user to deal with unsaved changes BEFORE we start
-            // switching scenes \u2014 otherwise we'd silently throw their work
-            // away when the next OpenScene call evicts the modified scene.
             if (originalIsDirty)
             {
                 if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                 {
-                    _multiLog.Add("[ERROR] Aborted \u2014 current scene has unsaved changes and was not saved.");
+                    _multiLog.Add("[ERROR] Export cancelled because the current scene has unsaved changes.");
                     _multiBusy = false;
                     Repaint();
                     return;
@@ -603,13 +590,10 @@ namespace OGFunMonkeHorror.Editor
             }
             finally
             {
-                // Always try to put the user back where they started, even if
-                // a mid-batch exception bubbled up. Failure to reopen is
-                // non-fatal \u2014 the user can do it manually from the log.
                 if (!string.IsNullOrEmpty(originalScenePath))
                 {
                     try { EditorSceneManager.OpenScene(originalScenePath, OpenSceneMode.Single); }
-                    catch { /* user reopens manually */ }
+                    catch { }
                 }
 
                 _multiBusy = false;
@@ -624,11 +608,55 @@ namespace OGFunMonkeHorror.Editor
                 EditorUtility.RevealInFinder(_outputFolder);
         }
 
+        private static List<string> CollectAssetBundlePaths(GameObject mapRoot)
+        {
+            var paths = new HashSet<string>();
+
+            var mh = mapRoot.GetComponentInChildren<MapHitsounds>(true);
+            if (mh != null && mh.materialSounds != null)
+                foreach (var ms in mh.materialSounds)
+                {
+                    AddAssetPaths(paths, ms.materials);
+                    AddAssetPaths(paths, ms.sounds);
+                }
+
+            foreach (var script in mapRoot.GetComponentsInChildren<MapScript>(true))
+            {
+                if (script.fields == null) continue;
+                foreach (var f in script.fields)
+                {
+                    if (f == null || f.objectValue == null) continue;
+                    if (!MapScriptFields.IsObjectType(f.type)) continue;
+                    Transform tr = (f.objectValue as GameObject)?.transform ?? (f.objectValue as Component)?.transform;
+                    bool sceneObject = tr != null && tr.gameObject.scene.IsValid();
+                    if (MapScriptFields.AllowSceneObject(f.type) && sceneObject) continue;
+                    AddAssetPath(paths, f.objectValue);
+                }
+            }
+
+            return new List<string>(paths);
+        }
+
+        private static void AddAssetPaths(HashSet<string> paths, UnityEngine.Object[] objs)
+        {
+            if (objs == null) return;
+            foreach (var o in objs) AddAssetPath(paths, o);
+        }
+
+        private static void AddAssetPath(HashSet<string> paths, UnityEngine.Object o)
+        {
+            if (o == null || !EditorUtility.IsPersistent(o)) return;
+            string p = AssetDatabase.GetAssetPath(o);
+            if (string.IsNullOrEmpty(p)) return;
+            if (p.StartsWith("Packages/")) return;
+            if (p.EndsWith(".unity")) return;
+            paths.Add(p);
+        }
+
         private static void AlignBuildSettingsForOgfmh()
         {
             var nbt = NamedBuildTarget.Android;
 
-            // Must match og fmh's Android NormalMapEncoding (XYZ).
             if (PlayerSettings.GetNormalMapEncoding(nbt) != NormalMapEncoding.XYZ)
                 PlayerSettings.SetNormalMapEncoding(nbt, NormalMapEncoding.XYZ);
 
@@ -778,7 +806,67 @@ namespace OGFunMonkeHorror.Editor
                 });
             }
 
+            foreach (var ms in mapRoot.GetComponentsInChildren<MapScript>(true))
+            {
+                if (ms.script == null) continue;
+
+                var fields = new List<LuaFieldData>();
+                if (ms.fields != null)
+                {
+                    foreach (var f in ms.fields)
+                    {
+                        if (f == null || string.IsNullOrEmpty(f.name)) continue;
+                        var fd = new LuaFieldData { name = f.name, type = f.type };
+
+                        if (MapScriptFields.IsObjectType(f.type))
+                        {
+                            Transform tr = (f.objectValue as GameObject)?.transform ?? (f.objectValue as Component)?.transform;
+                            bool sceneObject = tr != null && tr.gameObject.scene.IsValid();
+                            if (MapScriptFields.AllowSceneObject(f.type) && sceneObject)
+                                fd.objectPath = GetObjectPath(tr);
+                            else if (f.objectValue != null)
+                                fd.assetName = f.objectValue.name;
+                        }
+                        else if (f.type == "number") fd.number = f.numberValue;
+                        else if (f.type == "bool") fd.boolean = f.boolValue;
+                        else fd.text = f.stringValue;
+
+                        fields.Add(fd);
+                    }
+                }
+
+                data.luaScripts.Add(new LuaScriptData
+                {
+                    objectPath = GetObjectPath(ms.transform),
+                    scriptName = ms.script.name,
+                    source = ms.script.Text,
+                    fields = fields,
+                });
+            }
+
+            var mapHitsounds = mapRoot.GetComponentInChildren<MapHitsounds>(true);
+            if (mapHitsounds != null && mapHitsounds.materialSounds != null)
+            {
+                foreach (var msnd in mapHitsounds.materialSounds)
+                {
+                    data.hitsounds.entries.Add(new HitsoundEntry
+                    {
+                        materialNames = AssetNames(msnd.materials),
+                        soundNames = AssetNames(msnd.sounds),
+                    });
+                }
+            }
+
             return JsonUtility.ToJson(data, true);
+        }
+
+        private static string[] AssetNames(UnityEngine.Object[] assets)
+        {
+            if (assets == null) return new string[0];
+            var names = new string[assets.Length];
+            for (int i = 0; i < assets.Length; i++)
+                names[i] = assets[i] != null ? assets[i].name : "";
+            return names;
         }
 
         private static string GetObjectPath(Transform t)

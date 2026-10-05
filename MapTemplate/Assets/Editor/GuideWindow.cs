@@ -11,10 +11,11 @@ namespace OGFunMonkeHorror.Editor
             GettingStarted,
             MapRoot,
             SpawnPoints,
-            CreatingMaps,
+            BuildingYourMap,
             Triggers,
             Visuals,
             AI,
+            Scripting,
             Exporting,
         }
 
@@ -22,15 +23,21 @@ namespace OGFunMonkeHorror.Editor
         private Vector2 _sidebarScroll;
         private Vector2 _contentScroll;
 
+        private static GUIStyle _codeStyle;
+        private static GUIStyle _apiNameStyle;
+        private static GUIStyle _apiTextStyle;
+        private static Font _monoFont;
+
         private static readonly string[] TabLabels =
         {
             "Getting Started",
             "Map Root",
             "Spawn Points",
-            "Creating Maps",
+            "Building Your Map",
             "Triggers",
             "Visuals",
             "AI",
+            "Scripting",
             "Exporting",
         };
 
@@ -100,10 +107,11 @@ namespace OGFunMonkeHorror.Editor
                 case Tab.GettingStarted: DrawGettingStarted(); break;
                 case Tab.MapRoot: DrawMapRoot(); break;
                 case Tab.SpawnPoints: DrawSpawnPoints(); break;
-                case Tab.CreatingMaps: DrawCreatingMaps(); break;
+                case Tab.BuildingYourMap: DrawBuildingYourMap(); break;
                 case Tab.Triggers: DrawTriggers(); break;
                 case Tab.Visuals: DrawVisuals(); break;
                 case Tab.AI: DrawAI(); break;
+                case Tab.Scripting: DrawScripting(); break;
                 case Tab.Exporting: DrawExporting(); break;
             }
 
@@ -115,174 +123,445 @@ namespace OGFunMonkeHorror.Editor
         private void DrawGettingStarted()
         {
             Title("Getting Started");
-            Note("This template contains everything required to build and export a custom map for OG Fun Monke Horror. The tabs on the left walk through each part of the workflow in the order you'll need them.");
+            Note("This template has everything you need to make a custom map for OG Fun Monke Horror and upload it to mod.io. The tabs on the left are in the order you'll usually need them.");
 
-            Section("Overview");
-            Body("A map is a Unity scene built around a single GameObject called MapRoot. MapRoot acts as the container for everything your level contains. Geometry, spawn points, lighting, AI, and triggers. When you export, the entire MapRoot and its children are packaged into an AssetBundle that the main game can load at runtime.");
+            Section("How a Map Is Put Together");
+            Body("Every map is a Unity scene with one main object called MapRoot. Everything that belongs to your map goes inside MapRoot: the level itself, spawn points, lights, AI and triggers. When you export, the scene is packed into a file that the game downloads and loads.");
 
-            Section("Workflow Summary");
-            Body("1. Open the example scene under Assets/Scenes. It already has a MapRoot prefab set up with the required child structure.\n2. Select MapRoot and fill in the map's name, portal color, and lighting settings in the Inspector.\n3. Build your level geometry inside MapRoot/Environment.\n4. Add triggers, AI, and post-processing as needed (covered in their own tabs).\n5. Bake your lighting from Window → Rendering → Lighting.\n6. Export from OG Fun Monke Horror → Export in the top menu.");
+            Section("The Basic Steps");
+            Body("1. Open the Template1 scene in Assets/Scenes. MapRoot is already set up in it.\n" +
+                 "2. Select MapRoot and set the map name, portal color and lighting in the Inspector.\n" +
+                 "3. Build your level inside MapRoot/Environment.\n" +
+                 "4. Add triggers, AI and effects if you want them. Each one has its own tab here.\n" +
+                 "5. Bake your lighting from Window → Rendering → Lighting.\n" +
+                 "6. Export from OG Fun Monke Horror → Export and upload the .zip to mod.io.");
 
-            Section("How the Exporter Helps");
-            Body("The exporter scans your scene for missing pieces before producing the bundle. Errors are blocking issues that need to be fixed first; warnings are suggestions that can be ignored if you understand the tradeoff. Each error message points to a specific GameObject so you can jump straight to it.");
+            Section("Checks Before You Export");
+            Body("The exporter checks your scene before it builds anything. Red errors must be fixed before you can export. Yellow warnings are worth reading, but you can still export with them. Every message names the object it's talking about, so you know where to look.");
 
-            Section("Where to Get Help");
-            Body("Each tab on the left documents one feature in depth. You can reopen this guide at any point from the OG Fun Monke Horror menu.");
+            Section("Opening This Guide Again");
+            Body("You can open this guide any time from OG Fun Monke Horror → Guide.");
         }
 
         private void DrawMapRoot()
         {
             Title("Map Root");
-            Note("MapRoot is the single GameObject that represents your map. Its child GameObjects hold the level geometry, spawn points, and any optional systems like AI or triggers. The MapRoot component on this GameObject stores the map's metadata.");
+            Note("MapRoot is the main object of your map. Its settings in the Inspector control how the map appears in the lobby and how it looks once it loads.");
 
             Section("Map Name");
-            Body("The display name shown on the portal players walk into to load your map. Keep it under 19 characters to avoid it getting clipped in the UI.");
+            Body("The name shown on the portal in the lobby. It can be up to 19 characters long.");
 
             Section("Portal Color");
-            Body("The tint applied to the portal in the lobby. Choose whatever fits your map's atmosphere. This setting is purely cosmetic and doesn't affect lighting inside the level.");
+            Body("The color of the portal players walk into to load your map. It only changes the portal, not anything inside your map.");
 
             Section("Mods Allowed");
-            Body("Controls whether player-installed mods are active while the map is loaded. Leaving this enabled is recommended for most maps. Disable it if your map relies on specific physics behaviour that mods could disrupt.");
+            Body("Whether players can use their installed mods on your map. Most maps can leave this on. Turn it off if mods would break your map, for example if it depends on how fast players move or how high they jump.");
 
             Section("Max Players");
-            Body("Maximum number of players allowed in a public room running your map. When the game auto-joins players into your map, it uses this number as the cap. Range 1 to 50. The default is 15, which works well for most multiplayer maps. Set this lower for tight maps where many players would feel crowded, or higher for large open levels.");
+            Body("The most players that can be in a public room on your map, from 1 to 50. The default is 15. Use a lower number for small, tight maps and a higher one for big open maps.");
 
             Section("Skybox");
-            Body("Two modes are available:\n\n• Single Color: fills the sky with a flat color. Note that this only renders in-game, the Unity editor will continue to show the default editor skybox.\n• Material: uses a Skybox material. Choose this if you want a textured sky.");
+            Body("• Single Color fills the sky with one flat color. You'll only see it in the game. The Unity editor keeps showing its normal sky.\n" +
+                 "• Material uses a skybox material, for a sky with a texture.");
 
             Section("Ambient Color");
-            Body("Ambient color is the indirect light that fills the entire scene uniformly. It defaults to black.\n\nIf your map uses baked lighting, the ambient color only affects dynamic objects, the player, AI, and anything that moves. Static geometry uses the baked lightmap instead. For maps without baked lighting, ambient is the main source of fill light and should be tinted to match your scene's mood.");
+            Body("Ambient light is soft light that reaches every part of the map evenly. It starts out black.\n\n" +
+                 "If you bake your lighting, ambient color only affects things that move, like players and AI. The baked lighting handles everything else. If you don't bake, ambient color is most of your lighting, so pick one that fits the mood of your map.");
 
             Section("Fog");
-            Body("Fog gradually fades distant geometry into a chosen color, which is useful for creating a sense of depth or hiding the edges of small levels.\n\n• Start Distance: how far from the camera fog begins to appear.\n• End Distance: how far from the camera fog becomes fully opaque.\n\nThe fog color should usually match either the skybox or ambient color for the most natural result. Fog has a small per-frame cost, keep the end distance close to where you actually want the fade to stop.");
+            Body("Fog fades distant things into a single color. It adds depth and can hide the edges of a small map.\n\n" +
+                 "• Start Distance is where the fog begins.\n" +
+                 "• End Distance is where everything is completely covered.\n\n" +
+                 "Fog usually looks best when its color matches your sky or ambient color. It has a small performance cost on Quest.");
         }
 
         private void DrawSpawnPoints()
         {
             Title("Spawn Points");
-            Note("Spawn points define where the player appears when your map loads. They live as children of MapRoot.");
+            Note("Spawn points are where players appear when they enter your map.");
 
-            Section("Creating a Spawn Point");
-            Body("Add an empty GameObject as a child of MapRoot and name it PlayerSpawn. The player's position will match the spawn point's position when the map loads, and the player's initial look direction will match its rotation.");
+            Section("Adding a Spawn Point");
+            Body("Create an empty object inside MapRoot/PlayerSpawns. Players appear at its position and face the way its blue arrow points.");
 
-            Section("Multiple Spawn Points");
-            Body("You can add more than one PlayerSpawn. If multiple are present, the game picks one at random each time someone enters the map. This is useful for replayability or for maps with multiple starting locations.");
+            Section("More Than One Spawn Point");
+            Body("If you add several, the game picks one at random each time someone enters your map.");
 
-            Section("Placement Tips");
-            Body("Place spawn points slightly above floor geometry to avoid the player clipping into the floor on load. Make sure each spawn point has line of sight to whatever you want the player to see first, they will be facing the spawn's forward direction (the blue arrow in the Scene view).");
+            Section("Tips");
+            Body("Raise spawn points slightly above the floor so players don't spawn inside it. Point each one at whatever you want players to see first.");
         }
 
-        private void DrawCreatingMaps()
+        private void DrawBuildingYourMap()
         {
-            Title("Creating Your Map");
-            Note("All the visible content of your map lives inside the Environment GameObject. Walls, floors, props, lights, decorations, anything the player can see or interact with.");
+            Title("Building Your Map");
+            Note("Everything players can see and touch goes inside MapRoot/Environment: walls, floors, props, lights and decorations.");
 
-            Section("The Environment Object");
-            Body("MapRoot/Environment is reserved for your level geometry. The exporter only packages objects that are inside this hierarchy, so anything outside of it won't appear in-game.");
-            EditorGUILayout.HelpBox("If a model is showing up in the editor but missing in-game, the most common cause is that it was placed outside MapRoot/Environment. Drag it inside and re-export.", MessageType.Warning);
+            Section("Keep Everything Inside Environment");
+            Body("The game finds and places your map through MapRoot, so anything left outside MapRoot/Environment can end up missing or in the wrong place.");
+            EditorGUILayout.HelpBox("If something shows up in Unity but not in the game, check that it's inside MapRoot/Environment, then export again.", MessageType.Warning);
 
-            Section("Unity's Built-in Meshes");
-            Body("The default cube, sphere, capsule, and plane primitives are useful for blocking out a layout quickly. They are not ideal for a final map. Making a whole map with these looks bland and lacks visual interest. Treat them as placeholders and replace them with proper geometry once your layout is decided.");
+            Section("Unity's Basic Shapes");
+            Body("Cubes, spheres and planes are great for blocking out a layout quickly, but a whole map made of them looks plain. Use them to test your layout, then replace them with real models.");
 
-            Section("Using Blender");
-            Body("Blender (free at blender.org) is the most common tool for creating original 3D meshes. The general workflow is:\n\n1. Model your object in Blender.\n2. Apply transforms with Ctrl+A → All Transforms before exporting. This bakes scale and rotation into the mesh data, preventing issues in Unity.\n3. Export as an FBX file (File → Export → FBX).\n4. Drag the FBX into your Unity project and place it under MapRoot/Environment.\n\nKeep performance in mind: High triangle meshes can lag. Aim for fewer than 10,000 triangles per large structure and fewer than 2,000 per small prop. Use texture detail and lighting to add visual richness instead of polycount.");
+            Section("Making Models in Blender");
+            Body("Blender is free at blender.org and is the most common way to make your own models.\n\n" +
+                 "1. Model your object.\n" +
+                 "2. Select it and press Ctrl+A → All Transforms so its size and rotation come out right in Unity.\n" +
+                 "3. Export it with File → Export → FBX.\n" +
+                 "4. Drag the FBX into Unity and place it inside MapRoot/Environment.\n\n" +
+                 "Quest doesn't have much power, so keep models simple. Aim for under 10,000 triangles for large structures and under 2,000 for small props. Textures and lighting add detail far more cheaply than extra triangles.");
 
-            Section("Materials and Textures");
-            Body("Use the Universal Render Pipeline (URP) Lit shader for almost everything. It supports albedo, normal, metallic, smoothness, and emission maps. If a material is pink, make sure the shader being used is the Universal Render Pipelin/Lit shader.");
+            Section("Materials");
+            Body("Use the Universal Render Pipeline/Lit shader for almost everything. If a material shows up pink, it's using a shader the game can't draw. Switch it to Universal Render Pipeline/Lit.");
+
+            Section("Hit Sounds");
+            Body("When a player hits a surface, the game plays a sound based on its material. Materials with the same name as one of the game's own materials, like the Brick, grid and Glow materials in this template, use the game's sound automatically. Any other material is silent unless you give it sounds.\n\n" +
+                 "To give your materials their own sounds:\n" +
+                 "1. Select MapRoot and choose Add Component → OG Fun Monke Horror → Map Hitsounds.\n" +
+                 "2. Add an entry for each group of materials that should sound the same.\n" +
+                 "3. Drag those materials into Materials and the sound files into Sounds.\n\n" +
+                 "Each hit plays one of the entry's sounds at random. Use a single Map Hitsounds component per map.");
 
             Section("Triggers");
-            Body("Triggers are colliders that fire an action when the player touches them. Teleporting, opening doors, playing audio, spawning prefabs can be done with these triggers. See the Triggers tab for details.");
+            Body("Triggers make things happen when a player touches them, like teleporting, opening doors or playing sounds. See the Triggers tab.");
         }
 
         private void DrawTriggers()
         {
             Title("Triggers");
-            Note("A trigger is a GameObject with a collider set to Is Trigger that runs a piece of behaviour when the player walks into it. The template includes five trigger types: Teleporter, ToggleOnTriggered, AudioOnTriggered, SpawnOnTriggered, and DoorTrigger.");
+            Note("A trigger is an invisible area that does something when a player's body or hands touch it. The template has five: Teleporter, ToggleOnTriggered, AudioOnTriggered, SpawnOnTriggered and DoorTrigger.");
 
-            Section("Common Setup");
-            Body("Every trigger uses the same base setup. Before adding a trigger component, configure the GameObject like this:\n\n1. Create an empty GameObject inside MapRoot/Environment.\n2. Add a Collider component, Box, Sphere, or Capsule are recommended. A Mesh Collider can be used, but it must have Convex enabled.\n3. On the Collider, enable Is Trigger. This makes the collider fire trigger events instead of physically blocking the player.\n4. Set the GameObject's Layer to Ignore Raycast. This prevents the trigger from being interactable in unintended ways.\n\nThe Inspector for each trigger component will show red error messages if any of these requirements are missing, so you don't have to remember the list.\n\nTriggers fire on contact with the player's body or hands, not on physics objects or held items.");
+            Section("Setting Up Any Trigger");
+            Body("Every trigger starts the same way:\n\n" +
+                 "1. Create an empty object inside MapRoot/Environment.\n" +
+                 "2. Add a Box, Sphere or Capsule Collider. A Mesh Collider also works, but only with Convex turned on.\n" +
+                 "3. Turn on Is Trigger on the collider, so players pass through it instead of bumping into it.\n" +
+                 "4. Set the object's Layer to Ignore Raycast.\n\n" +
+                 "If you miss a step, the trigger's Inspector shows a red message telling you what to fix.\n\n" +
+                 "Triggers react to players' bodies and hands. They don't react to physics objects or to items players are holding.");
 
             Section("Teleporter");
-            Body("Moves the player to one of several preset destinations when they walk into the trigger.\n\n1. Complete the Common Setup above.\n2. Add Component → Teleporter.\n3. In the Inspector, drag one or more Transforms into the Teleport Points list.\n\nWith one point, the player always lands there. With multiple points, the game picks one at random each time — useful for spreading players across spawn locations or for randomized progression.");
+            Body("Sends the player somewhere else.\n\n" +
+                 "1. Set up the trigger as described above.\n" +
+                 "2. Add Component → Teleporter.\n" +
+                 "3. Drag one or more objects into Teleport Points.\n\n" +
+                 "With one point, players always land there. With several, the game picks one at random each time.");
 
             Section("ToggleOnTriggered");
-            Body("Changes the active state of one or more GameObjects. The most flexible trigger type, it can drive almost any scripted moment because any GameObject can be turned on or off.\n\n1. Complete the Common Setup above.\n2. Add Component → ToggleOnTriggered.\n3. Drag the GameObjects you want to affect into Targets.\n4. Pick a Mode:\n   • Toggle: flips each target's active state.\n   • Enable: forces every target on.\n   • Disable: forces every target off.\n5. Enable One Shot if the trigger should only fire the first time.\n\nTargets can be anything: lights, props, audio, particles, other triggers, or whole sections of geometry. The classic reveal pattern is to start a target disabled and have a trigger Enable it later when the player reaches a specific point.");
+            Body("Turns objects on or off. Almost anything can be turned on or off, so this is the most useful trigger for scripted moments.\n\n" +
+                 "1. Set up the trigger as described above.\n" +
+                 "2. Add Component → ToggleOnTriggered.\n" +
+                 "3. Drag the objects you want to change into Targets.\n" +
+                 "4. Choose a Mode:\n" +
+                 "   • Toggle switches each target to the opposite state.\n" +
+                 "   • Enable turns every target on.\n" +
+                 "   • Disable turns every target off.\n" +
+                 "5. Turn on One Shot if it should only work the first time.\n\n" +
+                 "A common trick is to start something turned off, like a monster or a hidden room, and turn it on when the player reaches a certain spot.");
 
             Section("AudioOnTriggered");
-            Body("Plays a sound effect when the player walks into the trigger. Use it for stingers, ambient layers, dialogue lines, footsteps, or any one-off audio cue.\n\n1. Complete the Common Setup above.\n2. Add Component → AudioOnTriggered. An AudioSource is added automatically.\n3. Drag an AudioClip into the Clip field.\n4. Adjust Volume (0 to 1) and Spatial Blend (0 = stereo, 1 = full 3D positional).\n5. Enable Loop if the clip should keep playing continuously after triggering.\n6. Enable One Shot if the trigger should only fire once.\n\nFor jump-scare stingers, use spatial blend of 1 and place the trigger directly where you want the sound to come from. For ambient music or background loops, use spatial blend 0 so the audio plays evenly throughout the map.");
+            Body("Plays a sound when a player walks in. Good for jump scare stings, music and voice lines.\n\n" +
+                 "1. Set up the trigger as described above.\n" +
+                 "2. Add Component → AudioOnTriggered. An AudioSource is added for you.\n" +
+                 "3. Drag a sound into Clip.\n" +
+                 "4. Set Volume (0 to 1) and Spatial Blend. At 0 the sound plays at the same volume everywhere. At 1 it comes from the trigger's position.\n" +
+                 "5. Turn on Loop to keep it playing after it starts.\n" +
+                 "6. Turn on One Shot if it should only play once.\n\n" +
+                 "For a scare, use a Spatial Blend of 1 and put the trigger where the sound should come from. For background music, use 0.");
 
             Section("SpawnOnTriggered");
-            Body("Instantiates a prefab when the player walks into the trigger. Useful for spawning monsters, props, particle effects, or even entire sections of geometry that shouldn't exist until the player reaches a certain point.\n\n1. Complete the Common Setup above.\n2. Add Component → SpawnOnTriggered.\n3. Drag a prefab into the Prefab field.\n4. Either tick Use Trigger Transform (spawns at this trigger's own position) or drag a separate Transform into Spawn Point (spawns there instead).\n5. Enable One Shot to prevent the spawn from happening every time the player re-enters.\n\nFor a monster that pops up behind the player, place an empty GameObject just behind their typical sight line, assign it as Spawn Point, and disable One Shot if you want it to keep respawning after death.");
+            Body("Creates a copy of a prefab when a player walks in, such as a monster, a prop or an effect.\n\n" +
+                 "1. Set up the trigger as described above.\n" +
+                 "2. Add Component → SpawnOnTriggered.\n" +
+                 "3. Drag a prefab into Prefab.\n" +
+                 "4. Turn on Use Trigger Transform to spawn it at the trigger, or drag an object into Spawn Point to spawn it there instead.\n" +
+                 "5. Turn on One Shot so it doesn't spawn again every time someone walks back in.");
 
             Section("DoorTrigger");
-            Body("Creates an animated door that opens and closes when the player presses it. The door slides between an Open Position and a Closed Position with smooth motion and synchronized audio.\n\n1. Complete the Common Setup above. DoorTrigger specifically requires a BoxCollider (not Sphere or Capsule).\n2. Add Component → DoorTrigger. A 3D AudioSource is added automatically.\n3. Drag your door's mesh GameObject into Door Object.\n4. Set Open Position and Closed Position. These are local positions relative to the door's parent — usually you'd record the door's current position as Closed and an offset position as Open.\n5. Set Speed (units per second the door travels).\n6. Optionally assign a Button Audio Clip (plays when pressed) and a Door Audio Clip (plays when the door finishes moving).\n\nAuto Open lets the door re-open automatically after a timer if it's closed. Enable Auto Open and set Auto Open Timer in seconds. Useful for one-way doors that lock the player into a room temporarily.\n\nNetwork Mode controls multiplayer sync:\n   • Client Side: the door isn't networked. Each player sees their own door state. Use this for cosmetic doors or single-player puzzles.\n   • Server Side: the door is fully synchronized. When one player opens it, every player in the room sees it open. Use this for doors that affect everyone, like the meetup, corner, or forest doors in the base game.");
+            Body("A door that slides open and shut when a player presses it.\n\n" +
+                 "1. Set up the trigger as described above. DoorTrigger needs a Box Collider.\n" +
+                 "2. Add Component → DoorTrigger. An AudioSource is added for you.\n" +
+                 "3. Drag the door model into Door Object.\n" +
+                 "4. Set Closed Position and Open Position. They're positions relative to the door's parent. The easiest way is to copy the door's current position into Closed Position, then work out where it should slide to for Open Position.\n" +
+                 "5. Set Speed to how fast the door moves.\n" +
+                 "6. For sounds, add a Button Audio Clip (plays when pressed) and a Door Audio Clip (plays when the door stops).\n\n" +
+                 "Turn on Auto Open to make a closed door open again by itself after Auto Open Timer seconds.\n\n" +
+                 "Network Mode decides whether other players see the door move:\n" +
+                 "   • Client Side: each player has their own copy of the door. Good for puzzles and decoration.\n" +
+                 "   • Server Side: everyone in the room sees the same door. When one player opens it, it opens for everyone.");
 
-            Section("Chaining Triggers");
-            Body("Triggers can drive each other. ToggleOnTriggered can Enable a DoorTrigger that didn't exist before, which can later be triggered by an AudioOnTriggered placed inside it. This is how scripted moments and progression are built — entirely through chained triggers, with no scripting required.\n\nExample sequence:\n1. Player enters Room A.\n2. ToggleOnTriggered (One Shot) enables a hidden monster prefab in Room B.\n3. AudioOnTriggered in Room A plays a footstep sound.\n4. SpawnOnTriggered behind the player drops a key prop.\n5. ToggleOnTriggered (One Shot) on the key prop disables the door blocking Room B once the player picks it up.\n\nNone of those steps require writing code.");
+            Section("Combining Triggers");
+            Body("Triggers can set each other up, so you can build whole scripted sequences without writing any code. For example:\n\n" +
+                 "1. A player walks into Room A.\n" +
+                 "2. A ToggleOnTriggered with One Shot turns on a hidden monster in Room B.\n" +
+                 "3. An AudioOnTriggered in Room A plays footsteps.\n" +
+                 "4. A SpawnOnTriggered drops a key behind the player.\n" +
+                 "5. When the player walks over the key, a ToggleOnTriggered with One Shot turns off the door blocking Room B.\n\n" +
+                 "For anything more complex, use a Map Script. See the Scripting tab.");
         }
 
         private void DrawVisuals()
         {
             Title("Visuals");
-            Note("This section covers post-processing, lighting, and how to use them effectively on Quest. The Quest's GPU is limited, so the goal is high visual impact at low runtime cost.");
+            Note("Lighting and post-processing make the biggest difference to how your map looks. Quest has a limited graphics chip, so the aim is to look good while costing as little as possible.");
 
-            Section("Post-Processing Volumes");
-            Body("A Volume applies full-screen effects like bloom, color grading, and vignette to your map. To add one:\n\n1. Create an empty GameObject inside MapRoot/Visuals and name it Volume.\n2. Add Component → Rendering → Volume.\n3. Enable Is Global so the effects apply everywhere in your map.\n4. Click New next to Profile to create a new Volume Profile asset.\n5. Click Add Override on the profile and pick the effects you want.\n\nBloom and color grading are inexpensive and almost always look good.");
+            Section("Post-Processing");
+            Body("Post-processing adds effects to the whole screen, like bloom, color grading and vignette.\n\n" +
+                 "1. Create an empty object inside MapRoot/Visuals and name it Volume. It must be called exactly Volume.\n" +
+                 "2. Add Component → Rendering → Volume.\n" +
+                 "3. Turn on Is Global so the effects apply everywhere in your map.\n" +
+                 "4. Click New next to Profile.\n" +
+                 "5. Click Add Override and pick the effects you want.\n\n" +
+                 "Bloom and color grading are cheap and look good on almost any map. Avoid Depth of Field, which is slow on Quest.");
 
-            Section("Baked Lighting (Unity)");
-            Body("Baked lighting is precomputed at build time and has effectively zero runtime cost, which makes it the preferred lighting method for Quest. To set it up:\n\n1. Open Window → Rendering → Lighting.\n2. Set each Light in your scene to Baked or Mixed mode.\n3. Select your static geometry and mark it as Static under Static → Contribute GI in the Inspector.\n4. Click Generate Lighting.\n\nThe lightmap will be computed and saved into the scene. Re-bake any time you change a Baked light or modify static geometry.");
+            Section("Baked Lighting with Unity");
+            Body("Baked lighting is worked out ahead of time, so it costs almost nothing while playing. It's the best choice for Quest.\n\n" +
+                 "1. Open Window → Rendering → Lighting.\n" +
+                 "2. Set your lights to Baked or Mixed.\n" +
+                 "3. Select your level geometry and turn on Static → Contribute GI in the Inspector.\n" +
+                 "4. Click Generate Lighting.\n\n" +
+                 "Bake again whenever you move a baked light or change static geometry.\n\n" +
+                 "Keep baked lights inside MapRoot/Visuals/Lighting/BakedLights and realtime lights inside MapRoot/Visuals/Lighting/RealtimeLights. The exporter checks this.");
 
-            Section("Baked Lighting (Bakery)");
-            Body("Bakery is a third-party lightmapper available on the Unity Asset Store. It produces noticeably higher quality results than Unity's built-in lightmapper and is significantly faster on supported hardware.\n\nTo use Bakery in this template, replace standard Unity Lights with BakeryPointLight, BakeryDirectLight, or BakeryAreaLight components, then bake from the Bakery window.");
-            EditorGUILayout.HelpBox("Bakery only supports modern Nvidia GPUs (RTX series recommended). It does not run on AMD or Apple Silicon.", MessageType.Warning);
+            Section("Baked Lighting with Bakery");
+            Body("Bakery is a paid lightmapper from the Unity Asset Store. It looks better than Unity's built-in baking and is usually much faster. Use Bakery's own light components instead of Unity's lights, then bake from the Bakery window.");
+            EditorGUILayout.HelpBox("Bakery only runs on NVIDIA graphics cards, and an RTX card is recommended. It doesn't work on AMD or Apple Silicon.", MessageType.Warning);
 
             Section("Realtime Lights");
-            Body("Realtime lights are calculated every frame and can be moved or changed at runtime. They are useful for dynamic effects but expensive on Quest, so use them sparingly.\n\n• Point Light: emits in all directions from a single point. Cheap when shadows are off.\n• Spot Light: emits in a cone shape. Good for flashlights or focused beams.\n• Directional Light: emulates sunlight. Keep it set to Baked or Mixed, realtime directional lights with shadows are expensive.\n• Area Light: rectangular emitter. Baked-only.\n\nLimit the number of shadow-casting realtime lights visible at any one time to 2 or 3. Stencil shadows from realtime lights are a common source of frame drops on Quest 2.");
+            Body("Realtime lights are calculated every frame, so they can move and change while playing. They're expensive on Quest, so only use them when you need to.\n\n" +
+                 "• Point Light shines in every direction from one point. It's cheap without shadows.\n" +
+                 "• Spot Light shines in a cone, like a flashlight.\n" +
+                 "• Directional Light works like the sun. Keep it set to Baked or Mixed, because realtime sun shadows are expensive.\n" +
+                 "• Area Light is a glowing rectangle and only works when baked.\n\n" +
+                 "Try not to have more than 2 or 3 shadow-casting realtime lights on screen at once.");
         }
 
         private void DrawAI()
         {
             Title("AI");
-            Note("This template supports two AI types built on Unity's NavMesh system. Neutral AI wanders between waypoints and ignores the player. Monster AI also wanders, but actively detects the player within a configurable cone of vision and chases them.");
+            Note("There are two kinds of AI. Neutral AI walks between waypoints and ignores players. Monster AI also walks between waypoints, but it chases any player it can see.");
 
-            Section("Step 1, Bake the NavMesh");
-            Body("Unity uses a NavMesh, a precomputed map of walkable surfaces to make AI movement. The template includes a prebuilt NavMeshSurface GameObject located at MapRoot/AI/NavMeshSurface.\n\nSelect this GameObject and click Bake in the NavMeshSurface component. Unity scans your geometry and produces a blue overlay showing walkable areas. Re-bake any time you modify the geometry your AI needs to traverse.");
+            Section("Step 1: Bake the NavMesh");
+            Body("AI finds its way around using a NavMesh, which is a map of the places it can walk. The template already has one at MapRoot/AI/NavMeshSurface. Select it and click Bake, and the walkable areas show up in blue. Bake again whenever you change the parts of the level your AI walks on.");
 
-            Section("Step 2, Add a NavMeshAgent");
-            Body("Each AI GameObject needs a NavMeshAgent component, which connects it to the NavMesh you just baked.\n\nAdd Component → AI → NavMesh Agent on your AI GameObject. Set Radius and Height to roughly match the dimensions of your AI's collider, too small and the AI will clip through obstacles, too large and it won't fit through doorways. Leave Speed at its default. MapAI overrides it at runtime.");
+            Section("Step 2: Add a NavMesh Agent");
+            Body("Select your AI object and choose Add Component → AI → NavMesh Agent. Set Radius and Height to roughly match the AI's size. If they're too small, the AI clips through walls. If they're too big, it won't fit through doors. Leave Speed as it is, because MapAI sets it while playing.");
 
-            Section("Step 3, Add MapAI");
-            Body("MapAI is the script that controls the AI's behaviour. Add Component → OGFunMonkeHorror → MapAI and choose either Neutral or Monster from the AI Type dropdown. The Inspector automatically hides fields that don't apply to the chosen type.");
+            Section("Step 3: Add MapAI");
+            Body("Click Add Component, search for MapAI and add it. Set AI Type to Neutral or Monster. The Inspector hides the settings that don't apply to the type you picked.");
 
-            Section("Step 4, Set Up Waypoints");
-            Body("Both AI types patrol between waypoints when they aren't actively pursuing the player. To create them:\n\n1. Create empty GameObjects as children of MapRoot/Waypoints.\n2. Position each waypoint on a walkable area of the NavMesh, anywhere the blue overlay covers.\n3. Drag each waypoint into the Waypoints array on your MapAI component.\n\nUse at least 4 waypoints per AI to avoid repetitive patterns. Every waypoint must be reachable on the NavMesh; an unreachable waypoint will cause the AI to stall or behave erratically.");
+            Section("Step 4: Add Waypoints");
+            Body("Both kinds of AI walk between waypoints when they aren't chasing anyone.\n\n" +
+                 "1. Create empty objects inside MapRoot/Waypoints.\n" +
+                 "2. Place each one somewhere that's blue on the NavMesh.\n" +
+                 "3. Drag them into the Waypoints list on MapAI.\n\n" +
+                 "Use at least 4 waypoints so the AI doesn't walk the same short loop. Every waypoint must be on the NavMesh, or the AI can get stuck.");
 
-            Section("Required Layer");
-            Body("The root GameObject of every AI (both Neutral and Monster) must have its Layer set to Ignore Raycast. This prevents the AI's own collider from interfering with the line-of-sight check that Monster AI uses to detect the player. The exporter will block your map from building if this is misconfigured.");
+            Section("Layer");
+            Body("Set the AI object's Layer to Ignore Raycast, for both kinds of AI. Otherwise the AI's own collider can block a monster's view of players. The exporter won't export until this is set.");
 
-            Section("Monster Detection Settings");
-            Body("Monster AI uses a vision cone combined with a raycast to detect the player.\n\n• Chase Distance: maximum distance at which the monster can detect the player, in metres.\n• Field of View: width of the vision cone in degrees. 180 is a reasonable default. 360 makes the monster omniscient and is rarely fun.\n• Chase Audio: an AudioSource that plays while the monster is actively pursuing. Make sure Play On Awake is disabled, MapAI starts and stops the audio itself.\n\nWhen the player enters the vision cone, the monster raycasts toward them. If the ray reaches the player without being blocked by geometry, the chase begins.");
+            Section("How Monsters See Players");
+            Body("• Chase Distance is how far away, in meters, the monster can spot a player.\n" +
+                 "• Field of View is how wide its view is, in degrees. 180 is a good place to start. 360 lets it see behind itself, which usually isn't much fun.\n" +
+                 "• Chase Audio is an AudioSource that plays while it's chasing. Turn off Play On Awake on it, because MapAI starts and stops it.\n\n" +
+                 "When a player is inside the monster's view, it checks whether a wall is in the way. If nothing blocks it, the chase starts.");
 
             Section("Monster Collider");
-            Body("Monsters need a Collider with Is Trigger enabled so the game can detect when the player makes contact and trigger the jumpscare.\n\nDo not use a Mesh Collider on a Monster. Use Box, Sphere, or Capsule. Mesh Colliders as triggers behave unreliably and are not supported.");
+            Body("A monster needs a Box, Sphere or Capsule Collider with Is Trigger turned on, so the game knows when it touches a player. Don't use a Mesh Collider on a monster, because it doesn't work reliably as a trigger.");
 
             Section("Jumpscare");
-            Body("Add a Jumpscare component to the same GameObject as MapAI to define what happens when the monster catches the player.\n\nThe component needs two things:\n• Jumpscare Prefab: a prefab spawned in front of the player's camera for 2 seconds when they are caught.\n• Respawn Points: a list of Transforms. The player is teleported to a random one after the jumpscare ends.\n\nA jumpscare prefab typically contains:\n• An AudioSource for the scare sound.\n• A black inside-out box that completely surrounds the player so they can't see the scene during the scare.\n• Your monster mesh inside the box, facing the player. Add an Animator if you want the monster to play an animation during the scare.");
+            Body("Add a Jumpscare component to the monster to decide what happens when it catches someone.\n\n" +
+                 "• Jumpscare Prefab is shown in front of the player for 2 seconds.\n" +
+                 "• Respawn Points are where the player is sent afterwards. One is picked at random.\n\n" +
+                 "A jumpscare prefab usually has a scare sound (an AudioSource), a black box around the player so they only see the scare, and the monster model inside the box facing them. Add an Animator if the monster should move during the scare.");
 
-            Section("Scene View Gizmos");
-            Body("Selecting a Monster AI in the Scene view shows its detection ranges as colored gizmos:\n• Red wireframe sphere is Chase Distance.\n• Yellow cone is Field of View.\n\nUse these to confirm the monster's detection covers the area you intend before testing in-game.");
+            Section("Seeing a Monster's Range");
+            Body("Select a monster in the Scene view to see how far it can see. The red sphere is its Chase Distance and the yellow cone is its Field of View. Check these before testing in the game.");
+        }
+
+        private void DrawScripting()
+        {
+            Title("Scripting");
+            Note("Map Scripts let you do things triggers can't. They're written in Lua 5.2, and most of the names match Unity, so they'll look familiar if you've used Unity before. Call methods with a colon, like door:SetActive(false), and read properties with a dot, like door.transform.");
+
+            Section("Creating a Script");
+            Body("Right-click in the Project window and choose Create → OG Fun Monke Horror → Map Script (Lua). Add a Map Script component to an object and drag the .lua file into its Lua Script field. Click Edit Script to open it. If the script has a mistake, the error shows up in the Inspector straight away.");
+
+            Section("Events");
+            Body("Write any of these functions in your script and the game calls them for you:");
+            Api("onStart()", "Runs once, when the map loads.");
+            Api("tick()", "Runs every frame. Multiply by Time.deltaTime for smooth movement.");
+            Api("onTriggerEnter(player)", "Runs when a player enters this object's trigger.");
+            Api("onTriggerExit(player)", "Runs when a player leaves this object's trigger.");
+
+            Section("Inspector Fields");
+            Body("Put a fields table at the top of your script to get slots you can fill in from the Inspector, like public variables in Unity. Write a type name for an object slot, or a value for a number, checkbox or text field that starts with that value.");
+            Code("fields = {\n    door   = GameObject,\n    clip   = AudioClip,\n    speed  = 3.0,\n    active = true,\n    label  = \"hello\",\n}");
+            Body("Object slots can be GameObject, Transform, TMP_Text, AudioSource, AudioClip, Material, Light, Animator, Rigidbody, Renderer or ParticleSystem. Each field becomes a variable with the same name in your script, already set to whatever you picked in the Inspector.");
+
+            Section("GameObject");
+            Api("GameObject.Find(\"Name\")", "Finds an object in your map by name. Gives nil if there isn't one.");
+            Api("go.name", "The object's name.");
+            Api("go.activeSelf", "Whether the object is turned on.");
+            Api("go:SetActive(true)", "Turns the object on or off.");
+            Api("go.transform", "The object's Transform.");
+            Api("go:GetComponent(\"AudioSource\")", "A component on the object, or nil if it doesn't have one.");
+
+            Section("Transform");
+            Api("t.position", "Position in the world, as a Vector3.");
+            Api("t.localPosition", "Position relative to its parent.");
+            Api("t.rotation", "Rotation in the world, as a Quaternion.");
+            Api("t.localScale", "Size.");
+            Api("t:Translate(x, y, z)", "Moves it.");
+            Api("t:Rotate(x, y, z)", "Rotates it by these angles in degrees.");
+
+            Section("Components");
+            Api("AudioSource", ":Play()  :Stop()  :PlayOneShot(clip)  .volume");
+            Api("Animator", ":SetTrigger(\"name\")  :SetBool(\"name\", true)");
+            Api("Light", ".enabled  .intensity  .color");
+            Api("Rigidbody", ":AddForce(x, y, z)  .velocity  .useGravity");
+            Api("Renderer", ".enabled");
+            Api("TMP_Text", ".text  .color  .fontSize");
+            Api("ParticleSystem", ":Play()  :Stop()  :Emit(count)");
+
+            Section("Values");
+            Api("Vector3(x, y, z)", "A position or direction. Read v.x, v.y and v.z. You can add vectors together and multiply them by a number.");
+            Api("Quaternion.Euler(x, y, z)", "A rotation made from angles in degrees.");
+            Api("Quaternion.identity", "No rotation.");
+            Api("Color(r, g, b)", "A color. Each value goes from 0 to 1.");
+
+            Section("Vector Math");
+            Api("a:Distance(b)", "The distance between two points.");
+            Api("a:Lerp(b, t)", "A point between a and b. t goes from 0 (at a) to 1 (at b).");
+            Api("a:Dot(b)  a:Cross(b)", "Dot product and cross product.");
+            Api("v.magnitude", "The vector's length.");
+            Api("v.normalized", "The same direction with a length of 1.");
+            Api("Quaternion.LookRotation(dir)", "A rotation that faces dir.");
+            Api("Quaternion.Slerp(a, b, t)", "A smooth blend between two rotations.");
+
+            Section("Raycasts");
+            Body("Physics.Raycast shoots an invisible line and tells you what it hit, or gives nil if it didn't hit anything.");
+            Code("local hit = Physics.Raycast(origin, direction, distance)\nif hit then\n    Debug.Log(hit.gameObject.name)\nend");
+            Body("A hit has gameObject (what was hit), point (where it was hit), normal (which way the surface faces) and distance (how far away it was).");
+
+            Section("Spawning Objects");
+            Body("Object.Instantiate makes a copy of a prefab you put in a GameObject field. Call Destroy on anything you spawn once you're done with it. Each script can only spawn a limited number of objects.");
+            Code("fields = { bullet = GameObject }\n\nfunction onStart()\n    local b = Object.Instantiate(bullet, LocalPlayer.mainCamera.position, Quaternion.identity)\n    b:GetComponent(\"Rigidbody\"):AddForce(0, 0, 20)\n    after(5, function() b:Destroy() end)\nend");
+
+            Section("Environment");
+            Body("Change the map's lighting and fog while it's running. These changes only affect each player's own view, so nothing needs to be synced between players.");
+            Api("Environment.ambientColor", "The soft light that reaches everything.");
+            Api("Environment.fog", "Turns fog on or off.");
+            Api("Environment.fogColor  .fogStart  .fogEnd", "The fog's color and distances.");
+            Api("Environment.skyColor", "A flat sky color.");
+            Api("Environment.skybox", "A skybox material, for example from a Material field.");
+
+            Section("Utilities");
+            Api("Mathf.Sin  Mathf.Lerp  Mathf.Clamp ...", "The usual math functions, plus Mathf.PI.");
+            Api("Time.deltaTime", "Seconds since the last frame.");
+            Api("Time.time", "The current time in seconds.");
+            Api("Random.Range(a, b)", "A random number between a and b.");
+            Api("Debug.Log(\"message\")", "Prints a message while you're testing.");
+            Api("after(seconds, function() ... end)", "Runs something after a delay.");
+            Api("state", "A table shared by every script in your map. Use it to pass information between scripts.");
+
+            Section("The Local Player");
+            Body("These only affect the player running the script, so nothing needs to be synced between players.");
+            Api("LocalPlayer.mainCamera", "The player's head. Read .position, .rotation and .forward.");
+            Api("LocalPlayer.leftHand  LocalPlayer.rightHand", "The player's hands. Read .position and .rotation.");
+            Api("LocalPlayer.velocity", "How fast and in which direction the player is moving. You can read and change it.");
+            Api("LocalPlayer:AddForce(x, y, z)", "Pushes the player.");
+            Api("LocalPlayer.jumpMultiplier", "How strong the player's jumps are. You can read and change it.");
+            Api("LocalPlayer.maxJumpSpeed", "The fastest a jump can launch the player. You can read and change it.");
+
+            Section("Controller Input");
+            Body("These update every frame. Read them inside tick().");
+            Api("PlayerInput.leftXAxis  leftYAxis  rightXAxis  rightYAxis", "The thumbsticks, from -1 to 1.");
+            Api("PlayerInput.leftTrigger  rightTrigger", "The triggers, from 0 to 1.");
+            Api("PlayerInput.leftGrip  rightGrip", "The grip buttons, from 0 to 1.");
+            Api("PlayerInput.leftPrimaryButton  rightPrimaryButton", "True while the button is held.");
+            Api("PlayerInput.leftSecondaryButton  rightSecondaryButton", "True while the button is held.");
+
+            Section("Vibration");
+            Api("startVibration(leftHand, strength, duration)", "Vibrates a controller. Use true for the left hand and false for the right. Strength goes from 0 to 1, and duration is in seconds.");
+            Code("startVibration(true, 0.8, 0.5)");
+
+            Section("The Player in Trigger Events");
+            Body("The player passed to onTriggerEnter and onTriggerExit is whoever touched the trigger. Read player.position to find out where they are.");
+
+            Section("Example");
+            Body("This opens a door two seconds after three players have stepped on a pressure plate. Put the script on the plate's trigger and drag the door into the door field.");
+            Code("fields = { door = GameObject }\n\nfunction onTriggerEnter(player)\n    state.count = (state.count or 0) + 1\n    if state.count >= 3 then\n        after(2.0, function() door:SetActive(false) end)\n    end\nend");
         }
 
         private void DrawExporting()
         {
             Title("Exporting");
-            Note("Exporting packages your scene into an AssetBundle for the main game to load at runtime. The export is produced as a single .zip file that you upload to your mod.io game page.");
+            Note("Exporting turns your map into a single .zip file. You upload that file to mod.io, and the game downloads it from there.");
 
-            Section("Export Steps");
-            Body("1. Open the exporter from OG Fun Monke Horror → Export.\n2. Assign your MapRoot GameObject to the MapRoot field.\n3. Click Browse and choose an output folder for the exported .zip.\n4. Review the validation panel. Fix any red errors before continuing, you cannot export until they're resolved.\n5. Click Export Map. The build process takes anywhere from a few seconds to a few minutes depending on map size.\n6. The .zip is saved to your chosen folder. Upload it to your mod.io game page for the map to become available in-game.");
+            Section("How to Export");
+            Body("1. Open OG Fun Monke Horror → Export.\n" +
+                 "2. Click Browse and choose a folder to save the .zip in.\n" +
+                 "3. Drag your MapRoot into the MapRoot field.\n" +
+                 "4. Fix any red errors in the Validation list. The Export button stays greyed out until they're all gone.\n" +
+                 "5. Click Export. Small maps take a few seconds, and large ones can take a few minutes.\n" +
+                 "6. Upload the .zip to the OG Fun Monke Horror page on mod.io.");
 
-            Section("After Exporting");
-            Body("The exporter automatically applies a few project setting tweaks behind the scenes to keep your map compatible with the main game's rendering — normal map encoding and color space are aligned during export. You don't need to manage these yourself, but if you ever notice your textures looking off after a re-import, those are the settings that were adjusted.");
+            Section("Exporting Several Maps at Once");
+            Body("Switch to Multiple Export at the top of the export window. Click Add Scene for each map and drag its scene into the new row. Every scene needs a MapRoot. Click Export All, and each map is saved as its own .zip in the output folder. The log underneath shows how each one went.");
+        }
+
+        private static Font MonoFont
+        {
+            get
+            {
+                if (_monoFont == null)
+                    _monoFont = Font.CreateDynamicFontFromOSFont(new[] { "Consolas", "Menlo", "Courier New" }, 12);
+                return _monoFont;
+            }
+        }
+
+        private static GUIStyle CodeStyle
+        {
+            get
+            {
+                if (_codeStyle != null) return _codeStyle;
+                _codeStyle = new GUIStyle(EditorStyles.textArea)
+                {
+                    wordWrap = false,
+                    richText = false,
+                    font = MonoFont,
+                    padding = new RectOffset(8, 8, 6, 6),
+                };
+                return _codeStyle;
+            }
+        }
+
+        private static GUIStyle ApiNameStyle
+        {
+            get
+            {
+                if (_apiNameStyle != null) return _apiNameStyle;
+                _apiNameStyle = new GUIStyle(EditorStyles.label)
+                {
+                    font = MonoFont,
+                    fontStyle = FontStyle.Bold,
+                    wordWrap = true,
+                };
+                return _apiNameStyle;
+            }
+        }
+
+        private static GUIStyle ApiTextStyle
+        {
+            get
+            {
+                if (_apiTextStyle != null) return _apiTextStyle;
+                _apiTextStyle = new GUIStyle(EditorStyles.wordWrappedLabel)
+                {
+                    padding = new RectOffset(16, 2, 0, 4),
+                };
+                return _apiTextStyle;
+            }
         }
 
         private void Title(string text)
@@ -306,6 +585,19 @@ namespace OGFunMonkeHorror.Editor
         private void Body(string text)
         {
             EditorGUILayout.LabelField(text, EditorStyles.wordWrappedLabel);
+        }
+
+        private void Api(string name, string description)
+        {
+            EditorGUILayout.LabelField(name, ApiNameStyle);
+            EditorGUILayout.LabelField(description, ApiTextStyle);
+        }
+
+        private void Code(string code)
+        {
+            float height = CodeStyle.CalcHeight(new GUIContent(code), 1000f);
+            EditorGUILayout.SelectableLabel(code, CodeStyle, GUILayout.Height(height));
+            EditorGUILayout.Space(2);
         }
     }
 }

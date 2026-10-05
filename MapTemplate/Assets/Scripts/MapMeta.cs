@@ -10,20 +10,11 @@ public class MapMeta
     public float  portalColorB;
     public float  portalColorA;
     public string androidBundle;
-    public string win64Bundle;
+    public string androidAssetsBundle;
 
     public Color PortalColor
     {
         get => new Color(portalColorR, portalColorG, portalColorB, portalColorA);
         set { portalColorR = value.r; portalColorG = value.g; portalColorB = value.b; portalColorA = value.a; }
-    }
-
-    public string BundleForCurrentPlatform()
-    {
-#if UNITY_EDITOR
-        return win64Bundle;
-#else
-        return Application.platform == RuntimePlatform.Android ? androidBundle : win64Bundle;
-#endif
     }
 }
